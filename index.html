@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CalenDeFi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@100..900&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              neo: {
+                bg: '#f0f0f0',
+                primary: '#3B82F6', // Cardano Blue
+                secondary: '#8B5CF6', // Purple
+                accent: '#AEFF00', // Lime
+                warning: '#FFD600', // Yellow
+                dark: '#121212',
+                pink: '#FF90E8',
+                // Feature specific
+                recurring: '#60A5FA', // Blue
+                oneoff: '#4ADE80', // Green
+                stake: '#C084FC', // Purple
+              }
+            },
+            fontFamily: {
+              display: ['"Lexend Mega"', 'sans-serif'],
+              body: ['"Space Grotesk"', 'sans-serif'],
+              funky: ['"Syne"', 'sans-serif'],
+            },
+            boxShadow: {
+              'neo': '5px 5px 0px 0px rgba(0,0,0,1)',
+              'neo-lg': '10px 10px 0px 0px rgba(0,0,0,1)',
+              'neo-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
+            },
+            animation: {
+              'marquee': 'marquee 25s linear infinite',
+              'float': 'float 6s ease-in-out infinite',
+              'float-delayed': 'float 6s ease-in-out 3s infinite',
+            },
+            keyframes: {
+              marquee: {
+                '0%': { transform: 'translateX(0%)' },
+                '100%': { transform: 'translateX(-100%)' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              }
+            },
+            transitionTimingFunction: {
+              'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        background-color: #f3f4f6;
+        overflow-x: hidden;
+      }
+      /* Hide scrollbar for marquee */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

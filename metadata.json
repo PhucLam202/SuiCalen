@@ -1,0 +1,5 @@
+{
+  "name": "CalenDeFi",
+  "description": "Schedule payments like meetings. A non-custodial interface for Cardano that turns Google Calendar events into crypto transactions.",
+  "requestFramePermissions": []
+}
