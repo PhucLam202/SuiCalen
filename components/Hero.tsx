@@ -1,6 +1,6 @@
 import React from 'react';
 import { NeoButton } from './NeoButton';
-import { ArrowRight, Wallet, RefreshCw, Users, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 
 export const Hero: React.FC = () => {

@@ -7,18 +7,69 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
-*.local
+build
+*.tsbuildinfo
+
+# Vite
+.vite
+.vite-ssg-temp
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.cursor 
+docs
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+.temp
+
+# Sui/Blockchain - Private keys and sensitive files
+*.key
+*.keystore
+sui.keystore
+*.pem
+*.p12
+*.pfx
+
+# Move build artifacts (handled by contracts/.gitignore but adding here for safety)
+*.mv
+*.abi

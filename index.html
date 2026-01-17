@@ -36,6 +36,8 @@
               'neo': '5px 5px 0px 0px rgba(0,0,0,1)',
               'neo-lg': '10px 10px 0px 0px rgba(0,0,0,1)',
               'neo-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
+              'soft': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
+              'soft-lg': '0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06)',
             },
             animation: {
               'marquee': 'marquee 25s linear infinite',
@@ -60,31 +62,63 @@
       }
     </script>
     <style>
+      :root {
+        --wkit-font-family: 'Space Grotesk', sans-serif;
+        --wkit-border-radius: 0;
+        --wkit-button-border-radius: 0;
+      }
+
       body {
         background-color: #f3f4f6;
         overflow-x: hidden;
       }
-      /* Hide scrollbar for marquee */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
+
       .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .custom-connect-btn button,
+      button.wallet-adapter-button {
+        background: white !important;
+        color: black !important;
+        font-family: 'Lexend Mega', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 1.25rem !important;
+        padding: 1rem 2rem !important;
+        border: 2px solid black !important;
+        box-shadow: 8px 8px 0 0 #000 !important;
+        border-radius: 0 !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+      }
+
+      .custom-connect-btn button:hover,
+      button.wallet-adapter-button:hover {
+        background: black !important;
+        color: white !important;
+      }
+
+      .wkit-dialog,
+      .wkit-modal,
+      .wkit-portal {
+        font-family: 'Space Grotesk', sans-serif !important;
+      }
+      
+      .glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
