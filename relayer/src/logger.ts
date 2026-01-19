@@ -7,7 +7,7 @@ const logFormat = printf(({ level, message, timestamp: ts }) => {
 });
 
 export const logger = winston.createLogger({
-  level: 'info',
+  level: process.env.LOG_LEVEL || 'info',
   format: combine(timestamp(), colorize(), logFormat),
   transports: [new winston.transports.Console()]
 });

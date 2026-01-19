@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { NeoButton } from '../NeoButton';
 import toast from 'react-hot-toast';
 import { AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
+import { optimizeYield, type OptimizeYieldSuccessResponseDto, type YieldProtocol } from '../../services/yieldApi';
+import { AutoAmmStrategyModal } from './AutoAmmStrategyModal';
+import type { AutoAmmMetadataV1 } from '../../services/autoAmmMetadata';
 
 const PACKAGE_ID = import.meta.env.VITE_AUTOPAY_PACKAGE_ID;
 const REGISTRY_ID = import.meta.env.VITE_REGISTRY_ID;
@@ -12,6 +15,12 @@ const REGISTRY_ID = import.meta.env.VITE_REGISTRY_ID;
 const KNOWN_ADDRESSES = [
   '0x123...', // Example
 ];
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((x: unknown) => typeof x === 'string');
+}
+
+type SelectedStrategy = { protocol: YieldProtocol; apr: number };
 
 export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }) => {
   const currentAccount = useCurrentAccount();
@@ -45,7 +54,8 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
     if (recipient.length > 10) {
       // In a real app, check against a stored list in localStorage or backend
       const known = localStorage.getItem('known_addresses');
-      const knownList = known ? JSON.parse(known) : KNOWN_ADDRESSES;
+      const parsedKnown: unknown = known ? JSON.parse(known) : KNOWN_ADDRESSES;
+      const knownList: string[] = isStringArray(parsedKnown) ? parsedKnown : KNOWN_ADDRESSES;
       setIsKnownAddress(knownList.includes(recipient));
     } else {
       setIsKnownAddress(null);
@@ -54,6 +64,15 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
 
   const [fee, setFee] = useState('10000000'); // Default 0.01 SUI
   const [loading, setLoading] = useState(false);
+
+  const [optimizeWithAutoAmm, setOptimizeWithAutoAmm] = useState<boolean>(false);
+  const [autoAmmOptimizeResult, setAutoAmmOptimizeResult] = useState<OptimizeYieldSuccessResponseDto | null>(null);
+  const [autoAmmSelected, setAutoAmmSelected] = useState<SelectedStrategy | null>(null);
+  const [autoAmmModalOpen, setAutoAmmModalOpen] = useState<boolean>(false);
+  const [autoAmmLoading, setAutoAmmLoading] = useState<boolean>(false);
+  const [autoAmmError, setAutoAmmError] = useState<string | null>(null);
+  const lastAutoAmmKeyRef = useRef<string | null>(null);
+  const autoAmmSelectedRef = useRef<SelectedStrategy | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,13 +111,44 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
       const feeMist = BigInt(fee); // Already in MIST
       const totalAmount = amountMist + feeMist;
 
+      if (optimizeWithAutoAmm && (!autoAmmOptimizeResult || !autoAmmSelected)) {
+        toast.error('Please select an AutoAMM strategy first');
+        setLoading(false);
+        return;
+      }
+
+      const metadataToSend: string =
+        optimizeWithAutoAmm && autoAmmOptimizeResult && autoAmmSelected
+          ? JSON.stringify(
+              {
+                version: 1,
+                description: metadata,
+                autoAmm: true,
+                token: 'SUI',
+                amountMist: amountMist.toString(),
+                targetDate: new Date(executionTimeMs).toISOString(),
+                recommendation: {
+                  protocol: autoAmmSelected.protocol,
+                  apr: autoAmmSelected.apr,
+                },
+                reasoning: autoAmmOptimizeResult.recommendation.reasoning,
+                consideredTop: autoAmmOptimizeResult.considered.slice(0, 4).map((c) => ({
+                  protocol: c.protocol,
+                  apr: c.apr,
+                  riskScore: c.riskScore,
+                  tvl: c.tvl,
+                })),
+              } satisfies AutoAmmMetadataV1
+            )
+          : metadata;
+
       console.log('Creating task with:', {
         recipient,
         amount: amountMist.toString(),
         fee: feeMist.toString(),
         total: totalAmount.toString(),
         executeAt: new Date(executionTimeMs).toISOString(),
-        metadata,
+        metadata: metadataToSend,
         packageId: PACKAGE_ID,
         registryId: REGISTRY_ID,
       });
@@ -115,7 +165,7 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
           tx.pure.address(recipient),
           tx.pure.u64(executionTimeMs),
           tx.pure.u64(feeMist),
-          tx.pure.vector('u8', Array.from(new TextEncoder().encode(metadata))),
+          tx.pure.vector('u8', Array.from(new TextEncoder().encode(metadataToSend))),
           tx.object(REGISTRY_ID),
           tx.object('0x6'), // Clock object
         ],
@@ -138,10 +188,10 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
             
             // Save to known addresses
             const known = localStorage.getItem('known_addresses');
-            const knownList = known ? JSON.parse(known) : [];
-            if (!knownList.includes(recipient)) {
-              localStorage.setItem('known_addresses', JSON.stringify([...knownList, recipient]));
-            }
+            const parsedKnown: unknown = known ? JSON.parse(known) : [];
+            const knownList: string[] = isStringArray(parsedKnown) ? parsedKnown : [];
+            const nextKnownList: string[] = knownList.includes(recipient) ? knownList : [...knownList, recipient];
+            localStorage.setItem('known_addresses', JSON.stringify(nextKnownList));
             
             toast.success(
               <div>
@@ -166,6 +216,12 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
             setAmount('');
             setExecuteAt('');
             setMetadata('');
+            setOptimizeWithAutoAmm(false);
+            setAutoAmmOptimizeResult(null);
+            setAutoAmmSelected(null);
+            setAutoAmmModalOpen(false);
+            setAutoAmmError(null);
+            autoAmmSelectedRef.current = null;
           },
           onError: (error) => {
             console.error('❌ Error creating task:', error);
@@ -192,6 +248,89 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!optimizeWithAutoAmm) {
+      setAutoAmmOptimizeResult(null);
+      setAutoAmmSelected(null);
+      setAutoAmmModalOpen(false);
+      setAutoAmmError(null);
+      setAutoAmmLoading(false);
+      lastAutoAmmKeyRef.current = null;
+      autoAmmSelectedRef.current = null;
+      return;
+    }
+
+    const amountNum: number = Number.parseFloat(amount);
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      setAutoAmmOptimizeResult(null);
+      setAutoAmmSelected(null);
+      setAutoAmmError(null);
+      setAutoAmmLoading(false);
+      autoAmmSelectedRef.current = null;
+      return;
+    }
+
+    const targetMs = new Date(executeAt).getTime();
+    if (!Number.isFinite(targetMs) || targetMs <= Date.now()) {
+      setAutoAmmOptimizeResult(null);
+      setAutoAmmSelected(null);
+      setAutoAmmError(null);
+      setAutoAmmLoading(false);
+      autoAmmSelectedRef.current = null;
+      return;
+    }
+
+    const controller = new AbortController();
+    const debounceId: number = window.setTimeout(() => {
+      void (async (): Promise<void> => {
+        try {
+          setAutoAmmLoading(true);
+          setAutoAmmError(null);
+
+          const amountMist = BigInt(Math.floor(amountNum * 1_000_000_000));
+          const key = `${amountMist.toString()}:${new Date(targetMs).toISOString()}`;
+
+          const resp = await optimizeYield({
+            amountMist: amountMist.toString(),
+            token: 'SUI',
+            targetDate: new Date(targetMs).toISOString(),
+            maxRiskScore: 6.999,
+          });
+
+          if (controller.signal.aborted) return;
+          setAutoAmmOptimizeResult(resp);
+
+          // If params changed, clear any previous selection.
+          if (lastAutoAmmKeyRef.current && lastAutoAmmKeyRef.current !== key) {
+            setAutoAmmSelected(null);
+            autoAmmSelectedRef.current = null;
+          }
+          lastAutoAmmKeyRef.current = key;
+
+          // Open modal if user hasn't selected a strategy yet.
+          if (autoAmmSelectedRef.current === null) {
+            setAutoAmmModalOpen(true);
+          }
+        } catch (err: unknown) {
+          if (controller.signal.aborted) return;
+          const msg = err instanceof Error ? err.message : String(err);
+          setAutoAmmOptimizeResult(null);
+          setAutoAmmSelected(null);
+          setAutoAmmError(msg);
+          autoAmmSelectedRef.current = null;
+        } finally {
+          if (controller.signal.aborted) return;
+          setAutoAmmLoading(false);
+        }
+      })();
+    }, 450);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(debounceId);
+    };
+  }, [amount, executeAt, optimizeWithAutoAmm]);
 
   return (
     <div className="glass border-[1.5px] border-white/20 p-8 shadow-soft-lg rounded-xl w-full relative overflow-hidden">
@@ -259,6 +398,57 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
              <span>Estimated Gas: ~0.001 SUI</span>
              <span className="text-green-600 font-bold bg-green-100 px-1 rounded">(Sponsored)</span>
           </div>
+
+          <div className="mt-3 border-2 border-black/10 rounded-lg p-3 bg-white/70">
+            <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+              <span className="font-mono font-bold text-sm">
+                🤖 Optimize with AutoAMM (AI Powered)
+              </span>
+              <input
+                type="checkbox"
+                checked={optimizeWithAutoAmm}
+                onChange={(e) => setOptimizeWithAutoAmm(e.target.checked)}
+                className="h-5 w-5 accent-black"
+              />
+            </label>
+
+            {optimizeWithAutoAmm && (
+              <div className="mt-2 text-xs font-mono">
+                {autoAmmLoading && <span className="text-gray-600">Fetching strategies...</span>}
+                {!autoAmmLoading && autoAmmError && <span className="text-red-600">AutoAMM unavailable: {autoAmmError}</span>}
+
+                {!autoAmmLoading && !autoAmmError && autoAmmOptimizeResult && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-black">
+                      Recommended: <span className="font-black uppercase">{autoAmmOptimizeResult.recommendation.protocol}</span>{' '}
+                      <span className="font-black">({autoAmmOptimizeResult.recommendation.apr.toFixed(2)}% APR)</span>
+                    </div>
+                    {autoAmmSelected ? (
+                      <div className="text-black">
+                        Selected: <span className="font-black uppercase">{autoAmmSelected.protocol}</span>{' '}
+                        <span className="font-black">({autoAmmSelected.apr.toFixed(2)}% APR)</span>{' '}
+                        <button
+                          type="button"
+                          onClick={() => setAutoAmmModalOpen(true)}
+                          className="ml-2 underline text-neo-secondary font-bold"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setAutoAmmModalOpen(true)}
+                        className="underline text-neo-secondary font-bold text-left"
+                      >
+                        Choose a strategy…
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div>
@@ -298,11 +488,17 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
           type="submit" 
           variant="primary" 
           fullWidth 
-          disabled={loading || !currentAccount}
+          disabled={loading || !currentAccount || (optimizeWithAutoAmm && (autoAmmLoading || autoAmmSelected === null))}
           className="mt-6 rounded-lg shadow-neo-sm hover:shadow-neo"
         >
           {loading ? 'Processing...' : 'Schedule Payment'}
         </NeoButton>
+
+        {optimizeWithAutoAmm && autoAmmSelected === null && (
+          <p className="text-red-500 text-center font-mono text-sm mt-2">
+            Select an AutoAMM strategy to schedule
+          </p>
+        )}
         
         {!currentAccount && (
           <p className="text-red-500 text-center font-mono text-sm mt-2">
@@ -310,6 +506,22 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
           </p>
         )}
       </form>
+
+      {optimizeWithAutoAmm && autoAmmOptimizeResult && (
+        <AutoAmmStrategyModal
+          isOpen={autoAmmModalOpen}
+          token={autoAmmOptimizeResult.token}
+          recommended={autoAmmOptimizeResult.recommendation}
+          considered={autoAmmOptimizeResult.considered}
+          selected={autoAmmSelected}
+          onSelect={(choice) => {
+            setAutoAmmSelected(choice);
+            autoAmmSelectedRef.current = choice;
+            setAutoAmmModalOpen(false);
+          }}
+          onClose={() => setAutoAmmModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

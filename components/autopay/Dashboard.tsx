@@ -9,11 +9,12 @@ import { EscrowSummary } from './EscrowSummary';
 import { NotificationHub } from './NotificationHub';
 import { SpendingLimits } from './SpendingLimits';
 import { Toaster } from 'react-hot-toast';
-import { Calendar, History, BarChart3, Lock, User } from 'lucide-react';
+import { Calendar, History, BarChart3, Lock, User, TrendingUp } from 'lucide-react';
+import { YieldRatesPanel } from '../yield/YieldRatesPanel';
 
 export const AutopayDashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<'scheduler' | 'dashboard' | 'escrow' | 'history' | 'analytics'>('scheduler');
+  const [activeTab, setActiveTab] = useState<'scheduler' | 'dashboard' | 'escrow' | 'history' | 'analytics' | 'yield'>('scheduler');
   const [tasks, setTasks] = useState<TaskDetails[]>([]);
 
   // Calculate spending limits stats
@@ -101,6 +102,12 @@ export const AutopayDashboard: React.FC = () => {
               icon={<BarChart3 size={20} />}
               label="Analytics"
             />
+            <TabButton
+              active={activeTab === 'yield'}
+              onClick={() => setActiveTab('yield')}
+              icon={<TrendingUp size={20} />}
+              label="Yield"
+            />
           </div>
         </div>
 
@@ -154,6 +161,12 @@ export const AutopayDashboard: React.FC = () => {
         {activeTab === 'analytics' && (
           <div className="max-w-6xl mx-auto">
             <AnalyticsDashboard />
+          </div>
+        )}
+
+        {activeTab === 'yield' && (
+          <div className="max-w-6xl mx-auto">
+            <YieldRatesPanel />
           </div>
         )}
       </div>
