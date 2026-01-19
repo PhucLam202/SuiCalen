@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell, Clock, Mail, MessageCircle } from 'lucide-react';
+import { formatTaskMetadata } from '../../services/autoAmmMetadata';
 
 interface Task {
   id: string;
@@ -68,7 +69,26 @@ export const NotificationHub: React.FC<NotificationHubProps> = ({ tasks }) => {
             <div key={task.id} className="bg-white/50 border border-white/40 p-3 rounded-lg flex justify-between items-center shadow-sm">
               <div>
                 <div className="font-mono text-xs font-bold text-gray-500 mb-1">UPCOMING TASK</div>
-                <div className="font-bold text-sm truncate w-32">{task.metadata || 'Payment'}</div>
+                {(() => {
+                  const metaText = task.metadata ?? '';
+                  const formatted = formatTaskMetadata(metaText);
+                  const maybeLegacyAutoAmm = metaText.includes('"autoAmm":true');
+                  return (
+                    <div className="flex flex-col gap-1">
+                      <div className="font-bold text-sm truncate w-40">{formatted.title}</div>
+                      {formatted.badge && (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-neo-primary/10 text-neo-secondary px-2 py-0.5 rounded-full text-[10px] font-bold border border-neo-primary/20 uppercase tracking-wide">
+                            {formatted.badge.label} → {formatted.badge.protocol} ({formatted.badge.apr.toFixed(2)}% APR)
+                          </span>
+                        </div>
+                      )}
+                      {!formatted.badge && maybeLegacyAutoAmm && (
+                        <div className="text-[10px] font-mono text-yellow-700">AutoAMM enabled but no strategy selected</div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">

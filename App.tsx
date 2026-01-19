@@ -4,6 +4,7 @@ import { Marquee } from './components/Marquee';
 import { CalendarCheck } from 'lucide-react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { SuiWalletButton } from './components/SuiWalletButton';
+import { YieldRatesPanel } from './components/yield/YieldRatesPanel';
 
 // Lazy load heavy components for better initial performance
 const Hero = lazy(() => import('./components/Hero').then(m => ({ default: m.Hero })));
@@ -49,6 +50,11 @@ const App: React.FC = () => {
               <Hero />
             </Suspense>
             <Marquee />
+            <section className="py-16 px-4 bg-neo-bg">
+              <div className="max-w-6xl mx-auto">
+                <YieldRatesPanel />
+              </div>
+            </section>
             <Suspense fallback={null}>
               <Features />
             </Suspense>
