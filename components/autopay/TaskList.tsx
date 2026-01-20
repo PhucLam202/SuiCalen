@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
-import { NeoButton } from '../NeoButton';
 import toast from 'react-hot-toast';
-import { Clock, Pause, Play, Trash2, Zap, AlertCircle } from 'lucide-react';
+import { Clock, Pause, Play, Trash2, Zap, ArrowRight, Wallet } from 'lucide-react';
 import type { SuiEvent, SuiObjectResponse } from '@mysten/sui/client';
 import { formatTaskMetadata } from '../../services/autoAmmMetadata';
 
@@ -29,7 +28,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  
+
   const [tasks, setTasks] = useState<TaskDetails[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -105,7 +104,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
   const fetchTasks = async () => {
     if (!currentAccount || !PACKAGE_ID) return;
     setLoading(true);
-    
+
     try {
       // 1. Query 'TaskCreated' events filtered by sender
       const events = await suiClient.queryEvents({
@@ -122,7 +121,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
 
       // Filter events where sender is current user
       const myTaskEvents = parsedEvents.filter((e) => e.sender === currentAccount.address);
-      
+
       if (myTaskEvents.length === 0) {
         setTasks([]);
         if (onTasksLoaded) onTasksLoaded([]);
@@ -163,7 +162,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
 
   const handleCancel = (taskId: string) => {
     if (!PACKAGE_ID || !REGISTRY_ID) return;
-    
+
     const tx = new Transaction();
     tx.moveCall({
       target: `${PACKAGE_ID}::autopay::cancel_task`,
@@ -178,9 +177,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
       { transaction: tx },
       {
         onSuccess: () => {
-          toast.success('Task cancelled successfully', {
-            icon: '🚫',
-          });
+          toast.success('Task cancelled successfully', { icon: '🚫' });
           fetchTasks(); // Refresh list
         },
         onError: (err) => {
@@ -192,7 +189,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
 
   const handleExecute = (taskId: string) => {
     if (!PACKAGE_ID || !REGISTRY_ID) return;
-    
+
     const tx = new Transaction();
     tx.moveCall({
       target: `${PACKAGE_ID}::autopay::execute_task`,
@@ -222,128 +219,141 @@ export const TaskList: React.FC<TaskListProps> = ({ onTasksLoaded }) => {
 
   const handlePause = (taskId: string) => {
     toast((t) => (
-        <span>
-          <b>Pause Scheduled Payment?</b>
-          <br/>
-          <span className="text-xs">This feature requires a smart contract update. Coming in v2.</span>
-          <button onClick={() => toast.dismiss(t.id)} className="ml-2 bg-gray-200 px-2 rounded">Dismiss</button>
-        </span>
+      <span>
+        <b>Pause Scheduled Payment?</b>
+        <br />
+        <span className="text-xs">This feature requires a smart contract update. Coming in v2.</span>
+        <button onClick={() => toast.dismiss(t.id)} className="ml-2 bg-gray-200 px-2 rounded">Dismiss</button>
+      </span>
     ), { icon: '⏸️' });
   };
 
   if (!currentAccount) {
     return (
-        <div className="glass border-[1.5px] border-black/10 p-8 shadow-soft-lg w-full text-center rounded-xl">
-            <p className="font-mono text-lg">Connect wallet to view your tasks</p>
+      <div className="bg-white border-4 border-black p-12 text-center shadow-neo">
+        <div className="inline-block p-4 bg-neo-bg border-4 border-black rounded-full mb-4">
+          <Wallet size={32} />
         </div>
+        <h3 className="font-display font-black text-2xl uppercase mb-2">Wallet Not Connected</h3>
+        <p className="font-mono text-gray-500">Connect your Sui wallet to view your scheduled tasks</p>
+      </div>
     );
   }
 
   return (
-    <div className="glass border-[1.5px] border-black/10 p-8 shadow-soft-lg w-full rounded-xl">
-      <div className="flex justify-between items-center mb-6 border-b-2 border-black/10 pb-2">
-        <h2 className="font-display text-2xl font-black uppercase">
-            Your Scheduled Tasks
+    <div className="bg-white border-4 border-black p-8 shadow-neo-lg relative">
+      <div className="flex justify-between items-center mb-8 border-b-4 border-black pb-4">
+        <h2 className="font-display text-4xl font-black uppercase">
+          Scheduled Tasks
         </h2>
-        <button onClick={fetchTasks} className="text-sm font-mono underline hover:text-neo-primary">
-            Refresh
+        <button onClick={fetchTasks} className="bg-white border-2 border-black px-4 py-2 font-display font-bold uppercase text-xs hover:bg-black hover:text-white transition-all shadow-neo-sm active:translate-y-0.5 active:shadow-none">
+          Refresh List
         </button>
       </div>
-      
+
       {loading && tasks.length === 0 ? (
-        <div className="text-center font-mono animate-pulse">Loading tasks from chain...</div>
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="font-display font-black uppercase animate-pulse">Loading tasks...</div>
+        </div>
       ) : (
         <div className="space-y-4">
-            {tasks.length === 0 ? (
-                <div className="text-center py-8">
-                    <p className="font-mono text-gray-500 mb-2">No active tasks found.</p>
-                </div>
-            ) : (
-                tasks.map((task) => {
-                    const isReady = new Date(task.execute_at) <= new Date();
-                    const formatted = formatTaskMetadata(task.metadata);
-                    
-                    return (
-                        <div key={task.id} className="bg-white/50 border border-white/40 p-5 rounded-lg shadow-sm hover:shadow-md hover:border-neo-primary/30 transition-all duration-300 relative group overflow-hidden">
-                            {/* Gradient Border on Hover */}
-                            <div className="absolute inset-0 border-2 border-transparent group-hover:border-neo-primary/20 rounded-lg pointer-events-none transition-all"></div>
-                            
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="font-bold text-lg">{formatted.title}</h3>
-                                        {task.status === 0 ? (
-                                            <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-[10px] font-bold border border-yellow-200 uppercase tracking-wide">
-                                                Pending
-                                            </span>
-                                        ) : (
-                                            <span className="bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full text-[10px] font-bold border border-gray-200 uppercase tracking-wide">
-                                                Processed
-                                            </span>
-                                        )}
-                                        {formatted.badge && (
-                                          <span className="bg-neo-primary/10 text-neo-secondary px-2 py-0.5 rounded-full text-[10px] font-bold border border-neo-primary/20 uppercase tracking-wide">
-                                            {formatted.badge.label} → {formatted.badge.protocol} ({formatted.badge.apr.toFixed(2)}% APR)
-                                          </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1 font-mono text-xs text-gray-500">
-                                        <span className="truncate max-w-[120px]" title={task.recipient}>
-                                            To: {task.recipient.slice(0, 6)}...{task.recipient.slice(-4)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="font-display font-black text-xl">{(task.balance / 1e9).toFixed(2)} SUI</div>
-                                    <div className="font-mono text-[10px] text-gray-400">Amount</div>
-                                </div>
-                            </div>
+          {tasks.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 border-2 border-dashed border-black/20">
+              <p className="font-display font-black text-gray-400 uppercase tracking-widest text-lg">No active tasks found</p>
+              <p className="font-mono text-gray-400 text-xs mt-2">Schedule your first payment above</p>
+            </div>
+          ) : (
+            tasks.map((task) => {
+              const isReady = new Date(task.execute_at) <= new Date();
+              const formatted = formatTaskMetadata(task.metadata);
 
-                            <div className="flex justify-between items-end">
-                                <div className="flex items-center gap-2 text-sm font-mono">
-                                    <Clock size={16} className={isReady ? "text-neo-primary animate-pulse" : "text-gray-400"} />
-                                    <span>
-                                        {new Date(task.execute_at).toLocaleString()}
-                                    </span>
-                                    {isReady && (
-                                        <span className="text-neo-primary font-bold text-xs bg-neo-primary/10 px-2 py-0.5 rounded">
-                                            READY
-                                        </span>
-                                    )}
-                                </div>
+              return (
+                <div key={task.id} className="bg-white border-2 border-black p-0 shadow-neo-sm hover:translate-x-1 transition-all group overflow-hidden">
+                  <div className="flex flex-col md:flex-row">
+                    {/* Left Status Bar */}
+                    <div className={`w-full md:w-2 h-2 md:h-auto ${task.status === 0 ? 'bg-neo-warning' : 'bg-gray-300'}`}></div>
 
-                                <div className="flex gap-2">
-                                    {isReady && (
-                                        <button 
-                                            onClick={() => handleExecute(task.id)}
-                                            className="p-2 bg-neo-primary text-white rounded-lg hover:bg-neo-primary/90 transition-colors shadow-sm"
-                                            title="Execute Task"
-                                        >
-                                            <Zap size={18} fill="currentColor" />
-                                        </button>
-                                    )}
-                                    
-                                    <button 
-                                        onClick={() => handlePause(task.id)}
-                                        className="p-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:text-white hover:border-transparent hover:bg-gradient-to-r hover:from-neo-primary hover:to-neo-secondary transition-all shadow-sm group/pause"
-                                        title="Pause Task"
-                                    >
-                                        <Pause size={18} fill="currentColor" />
-                                    </button>
-
-                                    <button 
-                                        onClick={() => handleCancel(task.id)}
-                                        className="p-2 bg-white border border-gray-200 text-red-500 rounded-lg hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"
-                                        title="Cancel Task"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
+                    <div className="p-6 flex-1">
+                      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-display font-black text-2xl uppercase tracking-tight">{formatted.title}</h3>
+                            {task.status === 0 ? (
+                              <span className="bg-neo-warning text-black px-2 py-0.5 border border-black text-[10px] font-black uppercase">
+                                Pending
+                              </span>
+                            ) : (
+                              <span className="bg-gray-200 text-gray-500 px-2 py-0.5 border border-gray-400 text-[10px] font-black uppercase">
+                                Processed
+                              </span>
+                            )}
+                            {formatted.badge && (
+                              <span className="bg-neo-accent text-black px-2 py-0.5 border border-black text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                AutoAMM: {formatted.badge.protocol}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 font-mono text-xs text-gray-500 bg-gray-50 px-2 py-1 border border-gray-200 w-fit">
+                            <span>To:</span>
+                            <span className="font-bold text-black" title={task.recipient}>
+                              {task.recipient.slice(0, 6)}...{task.recipient.slice(-4)}
+                            </span>
+                          </div>
                         </div>
-                    );
-                })
-            )}
+
+                        <div className="text-right bg-neo-bg p-3 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <div className="font-display font-black text-3xl">{(task.balance / 1e9).toFixed(2)} <span className="text-sm text-gray-500">SUI</span></div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col md:flex-row justify-between items-end gap-4 border-t-2 border-gray-100 pt-4 mt-2">
+                        <div className="flex items-center gap-2 text-sm font-mono font-bold">
+                          <Clock size={18} className={isReady ? "text-neo-primary animate-pulse" : "text-gray-400"} />
+                          <span>
+                            {new Date(task.execute_at).toLocaleString()}
+                          </span>
+                          {isReady && (
+                            <span className="text-neo-primary bg-neo-primary/10 px-2 py-0.5 border border-neo-primary text-[10px] uppercase tracking-widest animate-pulse">
+                              Ready for Execution
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex gap-3">
+                          {isReady && (
+                            <button
+                              onClick={() => handleExecute(task.id)}
+                              className="px-4 py-2 bg-neo-primary text-white border-2 border-black font-display font-bold uppercase text-xs flex items-center gap-2 hover:bg-black transition-all shadow-neo-sm active:translate-y-0.5 active:shadow-none"
+                              title="Execute Task"
+                            >
+                              Execute <Zap size={16} fill="currentColor" />
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handlePause(task.id)}
+                            className="px-4 py-2 bg-white text-black border-2 border-black font-display font-bold uppercase text-xs hover:bg-gray-100 transition-all shadow-neo-sm active:translate-y-0.5 active:shadow-none"
+                            title="Pause Task"
+                          >
+                            Pause
+                          </button>
+
+                          <button
+                            onClick={() => handleCancel(task.id)}
+                            className="px-3 py-2 bg-white text-red-500 border-2 border-black hover:bg-red-50 transition-all shadow-neo-sm active:translate-y-0.5 active:shadow-none"
+                            title="Cancel Task"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>

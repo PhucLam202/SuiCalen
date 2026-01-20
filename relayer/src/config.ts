@@ -1,5 +1,5 @@
 export const RELAYER_CONFIG = {
-  scanInterval: 15000, // ms
+  scanInterval: 60000, // ms (1 minute - reduced from 15s for stability)
   maxRetries: 3,
   gasBuffer: 1.2,
   priorityFee: 1000
@@ -14,7 +14,7 @@ export const YIELD_CONFIG = {
   protocols: ['scallop', 'navi', 'cetus', 'suilend'] as const
 } as const;
 
-export type YieldConfig = typeof YIELD_CONFIG;export const DATABASE_CONFIG = {
+export type YieldConfig = typeof YIELD_CONFIG; export const DATABASE_CONFIG = {
   dbName: process.env.MONGODB_DB_NAME || 'calendefi',
   connectionTimeout: 10000, // 10 seconds
   maxRetries: 3,

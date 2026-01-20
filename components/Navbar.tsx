@@ -6,7 +6,6 @@ const NAV_LINKS = [
   { name: 'Protocol', href: '#protocol' },
   { name: 'DAOs', href: '#daos' },
   { name: 'Tokenomics', href: '#pricing' },
-  { name: 'Whitepaper', href: '#resources' },
 ] as const;
 
 interface NavbarProps {
@@ -40,17 +39,17 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onLaunchApp }) => {
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
+            <a
+              key={link.name}
+              href={link.href}
               className="font-body font-bold text-lg hover:text-neo-primary hover:underline decoration-4 underline-offset-4 transition-all"
             >
               {link.name}
             </a>
           ))}
-          
+
           {/* Calendar / Launch App Link */}
-          <button 
+          <button
             onClick={onLaunchApp}
             className="bg-neo-accent px-4 py-2 border-2 border-black font-display font-bold uppercase hover:bg-neo-primary hover:text-white transition-all shadow-neo-sm active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
           >
@@ -64,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onLaunchApp }) => {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button 
+        <button
           className="md:hidden p-2 border-2 border-black bg-neo-warning shadow-neo-sm active:shadow-none active:translate-x-1 active:translate-y-1"
           onClick={toggleMenu}
           aria-label="Toggle menu"
@@ -87,14 +86,14 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onLaunchApp }) => {
             </a>
           ))}
           <button
-              onClick={() => {
-                closeMenu();
-                if (onLaunchApp) onLaunchApp();
-              }}
-              className="font-display text-2xl font-bold uppercase hover:text-neo-secondary text-left"
-            >
-              Calendar App
-            </button>
+            onClick={() => {
+              closeMenu();
+              if (onLaunchApp) onLaunchApp();
+            }}
+            className="font-display text-2xl font-bold uppercase hover:text-neo-secondary text-left"
+          >
+            Calendar App
+          </button>
           <SuiWalletButton className="w-full" />
         </div>
       )}

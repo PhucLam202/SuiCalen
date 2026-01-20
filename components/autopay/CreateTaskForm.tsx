@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
-import { NeoButton } from '../NeoButton';
 import toast from 'react-hot-toast';
-import { AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Zap, BrainCircuit } from 'lucide-react';
 import { optimizeYield, type OptimizeYieldSuccessResponseDto, type YieldProtocol } from '../../services/yieldApi';
 import { AutoAmmStrategyModal } from './AutoAmmStrategyModal';
 import type { AutoAmmMetadataV1 } from '../../services/autoAmmMetadata';
@@ -25,12 +24,12 @@ type SelectedStrategy = { protocol: YieldProtocol; apr: number };
 export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }) => {
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  
+
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [metadata, setMetadata] = useState('');
   const [isKnownAddress, setIsKnownAddress] = useState<boolean | null>(null);
-  
+
   // Initialize date if provided
   const [executeAt, setExecuteAt] = useState(() => {
     if (initialDate) {
@@ -76,7 +75,7 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!currentAccount) {
       toast.error("Please connect your wallet first");
       return;
@@ -90,7 +89,7 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
 
     try {
       setLoading(true);
-      
+
       // Validate inputs
       if (!recipient || !recipient.startsWith('0x')) {
         toast.error('Invalid recipient address');
@@ -100,7 +99,7 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
 
       const executionTimeMs = new Date(executeAt).getTime();
       const currentTime = Date.now();
-      
+
       if (executionTimeMs <= currentTime) {
         toast.error('Execution time must be in the future');
         setLoading(false);
@@ -120,41 +119,30 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
       const metadataToSend: string =
         optimizeWithAutoAmm && autoAmmOptimizeResult && autoAmmSelected
           ? JSON.stringify(
-              {
-                version: 1,
-                description: metadata,
-                autoAmm: true,
-                token: 'SUI',
-                amountMist: amountMist.toString(),
-                targetDate: new Date(executionTimeMs).toISOString(),
-                recommendation: {
-                  protocol: autoAmmSelected.protocol,
-                  apr: autoAmmSelected.apr,
-                },
-                reasoning: autoAmmOptimizeResult.recommendation.reasoning,
-                consideredTop: autoAmmOptimizeResult.considered.slice(0, 4).map((c) => ({
-                  protocol: c.protocol,
-                  apr: c.apr,
-                  riskScore: c.riskScore,
-                  tvl: c.tvl,
-                })),
-              } satisfies AutoAmmMetadataV1
-            )
+            {
+              version: 1,
+              description: metadata,
+              autoAmm: true,
+              token: 'SUI',
+              amountMist: amountMist.toString(),
+              targetDate: new Date(executionTimeMs).toISOString(),
+              recommendation: {
+                protocol: autoAmmSelected.protocol,
+                apr: autoAmmSelected.apr,
+              },
+              reasoning: autoAmmOptimizeResult.recommendation.reasoning,
+              consideredTop: autoAmmOptimizeResult.considered.slice(0, 4).map((c) => ({
+                protocol: c.protocol,
+                apr: c.apr,
+                riskScore: c.riskScore,
+                tvl: c.tvl,
+              })),
+            } satisfies AutoAmmMetadataV1
+          )
           : metadata;
 
-      console.log('Creating task with:', {
-        recipient,
-        amount: amountMist.toString(),
-        fee: feeMist.toString(),
-        total: totalAmount.toString(),
-        executeAt: new Date(executionTimeMs).toISOString(),
-        metadata: metadataToSend,
-        packageId: PACKAGE_ID,
-        registryId: REGISTRY_ID,
-      });
-
       const tx = new Transaction();
-      
+
       // Create a coin with exact amount for payment + fee
       const [paymentCoin] = tx.splitCoins(tx.gas, [totalAmount]);
 
@@ -171,8 +159,6 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
         ],
       });
 
-      console.log('Transaction prepared, signing...');
-
       signAndExecuteTransaction(
         {
           transaction: tx,
@@ -183,20 +169,17 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
         },
         {
           onSuccess: (result) => {
-            console.log('✅ Task created successfully!', result);
-            console.log('Transaction digest:', result.digest);
-            
             // Save to known addresses
             const known = localStorage.getItem('known_addresses');
             const parsedKnown: unknown = known ? JSON.parse(known) : [];
             const knownList: string[] = isStringArray(parsedKnown) ? parsedKnown : [];
             const nextKnownList: string[] = knownList.includes(recipient) ? knownList : [...knownList, recipient];
             localStorage.setItem('known_addresses', JSON.stringify(nextKnownList));
-            
+
             toast.success(
               <div>
                 <div className="font-bold">Task scheduled successfully!</div>
-                <a 
+                <a
                   href={`https://suiscan.xyz/testnet/tx/${result.digest}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -211,7 +194,7 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
                 duration: 5000,
               }
             );
-            
+
             setRecipient('');
             setAmount('');
             setExecuteAt('');
@@ -224,9 +207,6 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
             autoAmmSelectedRef.current = null;
           },
           onError: (error) => {
-            console.error('❌ Error creating task:', error);
-            console.error('Error details:', JSON.stringify(error, null, 2));
-            
             const errorMessage = error?.message || error?.toString() || 'Unknown error';
             toast.error(
               <div>
@@ -241,7 +221,6 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
         }
       );
     } catch (error: unknown) {
-      console.error('❌ Error preparing transaction:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(`Transaction error: ${errorMessage}`);
     } finally {
@@ -333,178 +312,164 @@ export const CreateTaskForm: React.FC<{ initialDate?: Date }> = ({ initialDate }
   }, [amount, executeAt, optimizeWithAutoAmm]);
 
   return (
-    <div className="glass border-[1.5px] border-white/20 p-8 shadow-soft-lg rounded-xl w-full relative overflow-hidden">
+    <div className="bg-white border-4 border-black p-8 w-full relative">
       {loading && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-          <div className="relative w-32 h-32 mb-4">
-             {/* Kiosk Animation */}
-             <div className="absolute inset-0 border-4 border-black rounded-lg bg-neo-bg"></div>
-             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-2 bg-black"></div>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-neo-primary rounded-full animate-bounce shadow-neo"></div>
-             <div className="absolute top-4 right-4 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>
+        <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center">
+          <div className="relative w-24 h-24 mb-4">
+            <div className="absolute inset-0 border-4 border-black animate-spin"></div>
+            <div className="absolute inset-4 bg-neo-primary"></div>
           </div>
-          <p className="font-display font-bold text-xl animate-pulse">Processing Transaction...</p>
-          <p className="font-mono text-sm text-gray-500 mt-2">Securing assets in Sui Kiosk</p>
+          <p className="font-display font-black text-xl uppercase animate-pulse">Processing...</p>
         </div>
       )}
 
-      <h2 className="font-display text-2xl font-black uppercase mb-6 border-b-2 border-black/10 pb-2">
-        Schedule Payment
-      </h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-center">
+        <h2 className="font-display text-4xl font-black uppercase">
+          Schedule Payment
+        </h2>
+        <div className="w-4 h-4 bg-neo-accent border-2 border-black"></div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="font-mono font-bold text-sm block mb-1">Recipient Address</label>
+          <label className="font-display font-black text-xs uppercase block mb-2 tracking-widest text-gray-500">Recipient Address</label>
           <div className="relative">
             <input
               type="text"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className={`w-full border-2 p-3 font-mono focus:outline-none focus:ring-4 focus:ring-neo-primary/20 transition-all rounded-lg ${
-                isKnownAddress === false ? 'border-yellow-400 bg-yellow-50' : 'border-black/10'
-              }`}
+              className={`w-full border-2 focus:border-4 border-black p-3 font-mono font-bold focus:outline-none focus:bg-neo-bg transition-all ${isKnownAddress === false ? 'bg-yellow-50' : 'bg-white'}`}
               placeholder="0x..."
               required
             />
             {isKnownAddress === false && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-yellow-500 group cursor-help">
-                <AlertTriangle size={20} className="animate-pulse" />
-                <div className="absolute right-0 bottom-full mb-2 w-48 bg-black text-white text-xs p-2 rounded hidden group-hover:block font-sans z-10">
-                  New wallet address - Please verify carefully
-                </div>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-yellow-600 cursor-help" title="Unknown Address">
+                <AlertTriangle size={20} />
               </div>
             )}
             {isKnownAddress === true && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
                 <CheckCircle2 size={20} />
               </div>
             )}
           </div>
         </div>
 
-        <div>
-          <label className="font-mono font-bold text-sm block mb-1">Amount (SUI)</label>
-          <input
-            type="number"
-            step="0.000000001"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full border-2 border-black/10 p-3 font-mono focus:outline-none focus:ring-4 focus:ring-neo-primary/20 transition-all rounded-lg"
-            placeholder="1.0"
-            required
-          />
-          <div className="flex items-center gap-1 mt-1 text-xs font-mono text-gray-500">
-             <Zap size={12} className="text-green-500 fill-green-500" />
-             <span>Estimated Gas: ~0.001 SUI</span>
-             <span className="text-green-600 font-bold bg-green-100 px-1 rounded">(Sponsored)</span>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-display font-black text-xs uppercase block mb-2 tracking-widest text-gray-500">Amount (SUI)</label>
+            <input
+              type="number"
+              step="0.000000001"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full border-2 focus:border-4 border-black p-3 font-mono font-bold focus:outline-none focus:bg-neo-bg transition-all"
+              placeholder="1.0"
+              required
+            />
           </div>
+          <div>
+            <label className="font-display font-black text-xs uppercase block mb-2 tracking-widest text-gray-500">Execution Time</label>
+            <input
+              type="datetime-local"
+              value={executeAt}
+              onChange={(e) => setExecuteAt(e.target.value)}
+              className="w-full border-2 focus:border-4 border-black p-3 font-mono font-bold focus:outline-none focus:bg-neo-bg transition-all text-sm"
+              required
+            />
+          </div>
+        </div>
 
-          <div className="mt-3 border-2 border-black/10 rounded-lg p-3 bg-white/70">
-            <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
-              <span className="font-mono font-bold text-sm">
-                🤖 Optimize with AutoAMM (AI Powered)
+        {/* AutoAMM Card */}
+        <div className={`border-2 border-black p-4 transition-all ${optimizeWithAutoAmm ? 'bg-neo-bg shadow-neo-sm' : 'bg-gray-50'}`}>
+          <label className="flex items-center justify-between cursor-pointer select-none">
+            <div className="flex items-center gap-2">
+              <BrainCircuit size={20} className={optimizeWithAutoAmm ? "text-neo-primary" : "text-gray-400"} />
+              <span className={`font-display font-black text-sm uppercase ${optimizeWithAutoAmm ? 'text-black' : 'text-gray-500'}`}>
+                Optimize with AutoAMM
               </span>
+            </div>
+            <div className="relative">
               <input
                 type="checkbox"
                 checked={optimizeWithAutoAmm}
                 onChange={(e) => setOptimizeWithAutoAmm(e.target.checked)}
-                className="h-5 w-5 accent-black"
+                className="sr-only peer"
               />
-            </label>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none border-2 border-black rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-2 after:border-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neo-primary"></div>
+            </div>
+          </label>
 
-            {optimizeWithAutoAmm && (
-              <div className="mt-2 text-xs font-mono">
-                {autoAmmLoading && <span className="text-gray-600">Fetching strategies...</span>}
-                {!autoAmmLoading && autoAmmError && <span className="text-red-600">AutoAMM unavailable: {autoAmmError}</span>}
-
-                {!autoAmmLoading && !autoAmmError && autoAmmOptimizeResult && (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-black">
-                      Recommended: <span className="font-black uppercase">{autoAmmOptimizeResult.recommendation.protocol}</span>{' '}
-                      <span className="font-black">({autoAmmOptimizeResult.recommendation.apr.toFixed(2)}% APR)</span>
-                    </div>
-                    {autoAmmSelected ? (
-                      <div className="text-black">
-                        Selected: <span className="font-black uppercase">{autoAmmSelected.protocol}</span>{' '}
-                        <span className="font-black">({autoAmmSelected.apr.toFixed(2)}% APR)</span>{' '}
-                        <button
-                          type="button"
-                          onClick={() => setAutoAmmModalOpen(true)}
-                          className="ml-2 underline text-neo-secondary font-bold"
-                        >
-                          Change
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setAutoAmmModalOpen(true)}
-                        className="underline text-neo-secondary font-bold text-left"
-                      >
-                        Choose a strategy…
-                      </button>
-                    )}
+          {optimizeWithAutoAmm && (
+            <div className="mt-4 pt-4 border-t-2 border-black/10">
+              {autoAmmLoading ? (
+                <div className="flex items-center gap-2 text-xs font-mono animate-pulse">
+                  <div className="w-2 h-2 bg-neo-primary rounded-full"></div>
+                  Finding best yields...
+                </div>
+              ) : autoAmmError ? (
+                <div className="text-red-500 text-xs font-mono font-bold">{autoAmmError}</div>
+              ) : autoAmmOptimizeResult ? (
+                <div className="bg-white border-2 border-black p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-display font-bold text-xs uppercase text-gray-500">Best Strategy</span>
+                    <span className="font-mono font-bold text-neo-primary">{autoAmmOptimizeResult.recommendation.protocol.toUpperCase()}</span>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  <div className="flex justify-between items-end">
+                    <div className="font-display font-black text-2xl">{autoAmmOptimizeResult.recommendation.apr.toFixed(2)}% <span className="text-xs font-normal text-gray-400">APR</span></div>
+                    <button
+                      type="button"
+                      onClick={() => setAutoAmmModalOpen(true)}
+                      className="text-xs font-bold underline hover:text-neo-primary"
+                    >
+                      Change Strategy
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs font-mono text-gray-500 italic">Enter amount & date to see yields</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div>
-          <label className="font-mono font-bold text-sm block mb-1">Execution Time</label>
-          <input
-            type="datetime-local"
-            value={executeAt}
-            onChange={(e) => setExecuteAt(e.target.value)}
-            className="w-full border-2 border-black/10 p-3 font-mono focus:outline-none focus:ring-4 focus:ring-neo-primary/20 transition-all rounded-lg"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="font-mono font-bold text-sm block mb-1">Description (Metadata)</label>
-          <input
-            type="text"
-            value={metadata}
-            onChange={(e) => setMetadata(e.target.value)}
-            className="w-full border-2 border-black/10 p-3 font-mono focus:outline-none focus:ring-4 focus:ring-neo-primary/20 transition-all rounded-lg"
-            placeholder="e.g. Monthly rent"
-          />
-        </div>
-
-        <div>
-          <label className="font-mono font-bold text-sm block mb-1">Relayer Fee (MIST)</label>
+          <label className="font-display font-black text-xs uppercase block mb-2 tracking-widest text-gray-500">Relayer Fee (MIST)</label>
           <input
             type="number"
             value={fee}
             onChange={(e) => setFee(e.target.value)}
-            className="w-full border-2 border-black/10 p-3 font-mono focus:outline-none focus:ring-4 focus:ring-neo-primary/20 transition-all bg-gray-50 rounded-lg"
+            className="w-full border-2 border-gray-300 p-2 font-mono text-sm bg-gray-50 text-gray-500 focus:outline-none"
+            readOnly
           />
-          <p className="text-xs text-gray-500 font-mono mt-1">1 SUI = 1,000,000,000 MIST. Default 0.01 SUI.</p>
         </div>
 
-        <NeoButton 
-          type="submit" 
-          variant="primary" 
-          fullWidth 
-          disabled={loading || !currentAccount || (optimizeWithAutoAmm && (autoAmmLoading || autoAmmSelected === null))}
-          className="mt-6 rounded-lg shadow-neo-sm hover:shadow-neo"
-        >
-          {loading ? 'Processing...' : 'Schedule Payment'}
-        </NeoButton>
+        <div>
+          <label className="font-display font-black text-xs uppercase block mb-2 tracking-widest text-gray-500">Metadata / Description</label>
+          <input
+            type="text"
+            value={metadata}
+            onChange={(e) => setMetadata(e.target.value)}
+            className="w-full border-2 border-black p-3 font-mono font-bold focus:outline-none focus:bg-neo-bg transition-all text-sm"
+            placeholder="e.g. Monthly Rent"
+          />
+        </div>
 
-        {optimizeWithAutoAmm && autoAmmSelected === null && (
-          <p className="text-red-500 text-center font-mono text-sm mt-2">
-            Select an AutoAMM strategy to schedule
-          </p>
-        )}
-        
-        {!currentAccount && (
-          <p className="text-red-500 text-center font-mono text-sm mt-2">
-            Connect wallet to schedule
-          </p>
-        )}
+        <button
+          type="submit"
+          disabled={loading || !currentAccount || (optimizeWithAutoAmm && (autoAmmLoading || autoAmmSelected === null))}
+          className="w-full bg-neo-primary text-white font-display font-black text-xl uppercase py-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin">⏳</span> Processing...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2 group-hover:gap-3 transition-all">
+              Schedule Payment <Zap size={20} fill="currentColor" />
+            </span>
+          )}
+        </button>
       </form>
 
       {optimizeWithAutoAmm && autoAmmOptimizeResult && (

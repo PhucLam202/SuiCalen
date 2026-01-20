@@ -6,13 +6,13 @@ import { ScrollReveal } from './ScrollReveal';
 const plans = [
   {
     name: 'Retail',
-    price: '0 ADA',
+    price: '0 SUI',
     features: ['Standard Transactions', 'Basic Calendar Sync', 'Manual Signing', 'Community Support'],
     color: 'bg-white',
   },
   {
     name: 'Power User',
-    price: '50 ADA',
+    price: '50 SUI',
     features: ['Recurring Payments (Blue)', 'Token Swaps (Green)', 'Unlimited Automations', 'Priority Node Access', 'Email Notifications'],
     color: 'bg-neo-oneoff',
     highlight: true,
@@ -30,8 +30,8 @@ const plans = [
 export const Pricing: React.FC = () => {
   return (
     <section className="py-24 bg-neo-bg px-4 relative border-t-4 border-black" id="pricing">
-      <div className="absolute top-0 left-0 w-full h-full opacity-5" 
-           style={{backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
+      <div className="absolute top-0 left-0 w-full h-full opacity-5"
+        style={{ backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
@@ -53,9 +53,9 @@ export const Pricing: React.FC = () => {
                 ${plan.highlight ? 'shadow-neo-lg z-10 scale-105' : 'shadow-neo'}
               `}>
                 {plan.highlight && (
-                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-black text-white border-2 border-white font-bold px-4 py-1 font-mono text-sm uppercase shadow-neo">
-                     Best Value
-                   </div>
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-black text-white border-2 border-white font-bold px-4 py-1 font-mono text-sm uppercase shadow-neo">
+                    Best Value
+                  </div>
                 )}
 
                 <div>
@@ -77,8 +77,8 @@ export const Pricing: React.FC = () => {
                   ))}
                 </ul>
 
-                <NeoButton 
-                  fullWidth 
+                <NeoButton
+                  fullWidth
                   variant={plan.btnVariant as any || (plan.highlight ? 'black' : 'primary')}
                 >
                   Select Plan

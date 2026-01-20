@@ -73,3 +73,5 @@ sui.keystore
 # Move build artifacts (handled by contracts/.gitignore but adding here for safety)
 *.mv
 *.abi
+*.shared
+.agent

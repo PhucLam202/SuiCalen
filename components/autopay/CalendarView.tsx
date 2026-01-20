@@ -9,7 +9,7 @@ interface CalendarViewProps {
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ onDateSelect, selectedDate, onRangeSelect }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  
+
   // Drag selection state
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Date | null>(null);
@@ -40,31 +40,31 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onDateSelect, select
 
   const isToday = (day: number) => {
     const today = new Date();
-    return day === today.getDate() && 
-           currentMonth.getMonth() === today.getMonth() && 
-           currentMonth.getFullYear() === today.getFullYear();
+    return day === today.getDate() &&
+      currentMonth.getMonth() === today.getMonth() &&
+      currentMonth.getFullYear() === today.getFullYear();
   };
 
   const isSelected = (day: number) => {
     if (!selectedDate) return false;
     return day === selectedDate.getDate() &&
-           currentMonth.getMonth() === selectedDate.getMonth() &&
-           currentMonth.getFullYear() === selectedDate.getFullYear();
+      currentMonth.getMonth() === selectedDate.getMonth() &&
+      currentMonth.getFullYear() === selectedDate.getFullYear();
   };
 
   // Check if a day is within the drag range
   const isInRange = (day: number) => {
     if (!dragStart || !dragEnd) return false;
-    
+
     const currentDayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const start = dragStart < dragEnd ? dragStart : dragEnd;
     const end = dragStart < dragEnd ? dragEnd : dragStart;
-    
+
     // Reset time components for comparison
-    const check = new Date(currentDayDate.setHours(0,0,0,0));
-    const s = new Date(new Date(start).setHours(0,0,0,0));
-    const e = new Date(new Date(end).setHours(0,0,0,0));
-    
+    const check = new Date(currentDayDate.setHours(0, 0, 0, 0));
+    const s = new Date(new Date(start).setHours(0, 0, 0, 0));
+    const e = new Date(new Date(end).setHours(0, 0, 0, 0));
+
     return check >= s && check <= e;
   };
 
@@ -102,24 +102,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onDateSelect, select
   }, [isDragging]);
 
   return (
-    <div className="glass border-[1.5px] border-black/10 p-6 shadow-soft-lg w-full h-full rounded-xl transition-all hover:shadow-neo-sm">
+    <div className="bg-white border-4 border-black p-6 w-full h-full relative">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="font-display text-xl font-bold uppercase tracking-tight">
+        <h2 className="font-display text-xl font-bold uppercase tracking-tight text-black border-2 border-black bg-neo-bg px-3 py-1">
           {currentMonth.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
         </h2>
         <div className="flex gap-2">
-          <button onClick={prevMonth} className="p-2 border border-black/10 rounded-lg hover:bg-neo-bg transition-colors">
+          <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all">
             <ChevronLeft size={20} />
           </button>
-          <button onClick={nextMonth} className="p-2 border border-black/10 rounded-lg hover:bg-neo-bg transition-colors">
+          <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all">
             <ChevronRight size={20} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 font-mono font-bold mb-2">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center text-gray-500 uppercase text-[10px] tracking-wider">{day}</div>
+      <div className="grid grid-cols-7 gap-1 font-mono font-bold text-sm mb-2 border-b-2 border-black pb-2">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+          <div key={day} className="text-center text-gray-400">{day}</div>
         ))}
       </div>
 
@@ -127,12 +127,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onDateSelect, select
         {blanks.map((_, i) => (
           <div key={`blank-${i}`} className="aspect-square"></div>
         ))}
-        
+
         {days.map(day => {
           const inRange = isInRange(day);
           const selected = isSelected(day);
           const today = isToday(day);
-          
+
           return (
             <button
               key={day}
@@ -140,30 +140,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onDateSelect, select
               onMouseEnter={() => handleMouseEnter(day)}
               onMouseUp={handleMouseUp}
               className={`
-                aspect-square flex items-center justify-center font-mono text-sm rounded-lg transition-all
-                ${today ? 'bg-neo-accent/20 border border-neo-accent text-black font-bold' : ''}
-                ${selected ? 'bg-neo-primary text-white shadow-soft font-bold transform scale-105' : ''}
-                ${inRange && !selected ? 'bg-neo-primary/20' : ''}
-                ${!selected && !inRange ? 'hover:bg-gray-100 hover:scale-110' : ''}
+                aspect-square flex items-center justify-center font-display font-bold text-base border-2 border-transparent transition-all relative
+                ${today && !selected ? 'border-neo-accent bg-neo-accent/20' : ''}
+                ${selected ? 'bg-black text-white border-black z-10' : 'hover:border-black hover:bg-gray-50'}
+                ${inRange && !selected ? 'bg-gray-200' : ''}
               `}
             >
               {day}
+              {today && (
+                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-neo-accent rounded-full border border-black"></div>
+              )}
             </button>
           );
         })}
       </div>
-      
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <div className="flex items-center gap-2 text-xs font-mono text-gray-500">
-          <div className="w-3 h-3 bg-neo-primary rounded-sm"></div>
-          <span>Selected</span>
-          <div className="w-3 h-3 bg-neo-accent/20 border border-neo-accent rounded-sm ml-2"></div>
-          <span>Today</span>
-        </div>
-        <p className="mt-2 text-[10px] text-gray-400 font-mono text-center">
-          Click and drag to select range
-        </p>
-      </div>
+
+      {/* Decorative corner */}
+      <div className="absolute -bottom-2 -right-2 w-full h-full border-r-4 border-b-4 border-black pointer-events-none -z-10"></div>
     </div>
   );
 };

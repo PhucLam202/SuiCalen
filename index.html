@@ -1,124 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CalenDeFi</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@100..900&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              neo: {
-                bg: '#f0f0f0',
-                primary: '#3B82F6', // Cardano Blue
-                secondary: '#8B5CF6', // Purple
-                accent: '#AEFF00', // Lime
-                warning: '#FFD600', // Yellow
-                dark: '#121212',
-                pink: '#FF90E8',
-                // Feature specific
-                recurring: '#60A5FA', // Blue
-                oneoff: '#4ADE80', // Green
-                stake: '#C084FC', // Purple
-              }
-            },
-            fontFamily: {
-              display: ['"Lexend Mega"', 'sans-serif'],
-              body: ['"Space Grotesk"', 'sans-serif'],
-              funky: ['"Syne"', 'sans-serif'],
-            },
-            boxShadow: {
-              'neo': '5px 5px 0px 0px rgba(0,0,0,1)',
-              'neo-lg': '10px 10px 0px 0px rgba(0,0,0,1)',
-              'neo-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
-              'soft': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
-              'soft-lg': '0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06)',
-            },
-            animation: {
-              'marquee': 'marquee 25s linear infinite',
-              'float': 'float 6s ease-in-out infinite',
-              'float-delayed': 'float 6s ease-in-out 3s infinite',
-            },
-            keyframes: {
-              marquee: {
-                '0%': { transform: 'translateX(0%)' },
-                '100%': { transform: 'translateX(-100%)' },
-              },
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-20px)' },
-              }
-            },
-            transitionTimingFunction: {
-              'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CalenDeFi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@100..900&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            neo: {
+              bg: '#f8f9fa',
+              primary: '#4CA2FF', // Sui Blue
+              secondary: '#A855F7', // Purple
+              accent: '#BCF72B', // Vibrant Lime
+              warning: '#FFD600', // Yellow
+              dark: '#121212',
+              pink: '#FF90E8',
+              // Feature specific
+              recurring: '#60A5FA', // Blue
+              oneoff: '#4ADE80', // Green
+              stake: '#C084FC', // Purple
             }
           },
+          fontFamily: {
+            display: ['"Lexend Mega"', 'sans-serif'],
+            body: ['"Space Grotesk"', 'sans-serif'],
+            funky: ['"Syne"', 'sans-serif'],
+          },
+          boxShadow: {
+            'neo': '4px 4px 0px 0px rgba(0,0,0,1)',
+            'neo-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
+            'neo-sm': '2px 2px 0px 0px rgba(0,0,0,1)',
+            'soft': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
+            'soft-lg': '0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06)',
+          },
+          animation: {
+            'marquee': 'marquee 25s linear infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'float-delayed': 'float 6s ease-in-out 3s infinite',
+          },
+          keyframes: {
+            marquee: {
+              '0%': { transform: 'translateX(0%)' },
+              '100%': { transform: 'translateX(-100%)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-20px)' },
+            }
+          },
+          transitionTimingFunction: {
+            'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+          }
         },
-      }
-    </script>
-    <style>
-      :root {
-        --wkit-font-family: 'Space Grotesk', sans-serif;
-        --wkit-border-radius: 0;
-        --wkit-button-border-radius: 0;
-      }
+      },
+    }
+  </script>
+  <style>
+    :root {
+      --wkit-font-family: 'Space Grotesk', sans-serif;
+      --wkit-border-radius: 0;
+      --wkit-button-border-radius: 0;
+    }
 
-      body {
-        background-color: #f3f4f6;
-        overflow-x: hidden;
-      }
+    * {
+      border-color: #000;
+    }
 
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
+    body {
+      background-color: #f3f4f6;
+      overflow-x: hidden;
+    }
 
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-      .custom-connect-btn button,
-      button.wallet-adapter-button {
-        background: white !important;
-        color: black !important;
-        font-family: 'Lexend Mega', sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 1.25rem !important;
-        padding: 1rem 2rem !important;
-        border: 2px solid black !important;
-        box-shadow: 8px 8px 0 0 #000 !important;
-        border-radius: 0 !important;
-        cursor: pointer !important;
-        transition: all 0.2s !important;
-      }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
 
-      .custom-connect-btn button:hover,
-      button.wallet-adapter-button:hover {
-        background: black !important;
-        color: white !important;
-      }
+    .custom-connect-btn button,
+    button.wallet-adapter-button {
+      background: white !important;
+      color: black !important;
+      font-family: 'Lexend Mega', sans-serif !important;
+      font-weight: 700 !important;
+      font-size: 1.25rem !important;
+      padding: 1rem 2rem !important;
+      border: 2px solid black !important;
+      box-shadow: 8px 8px 0 0 #000 !important;
+      border-radius: 0 !important;
+      cursor: pointer !important;
+      transition: all 0.2s !important;
+    }
 
-      .wkit-dialog,
-      .wkit-modal,
-      .wkit-portal {
-        font-family: 'Space Grotesk', sans-serif !important;
-      }
-      
-      .glass {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+    .custom-connect-btn button:hover,
+    button.wallet-adapter-button:hover {
+      background: black !important;
+      color: white !important;
+    }
+
+    .wkit-dialog,
+    .wkit-modal,
+    .wkit-portal {
+      font-family: 'Space Grotesk', sans-serif !important;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
 </html>
